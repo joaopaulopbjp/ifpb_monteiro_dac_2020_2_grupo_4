@@ -1,66 +1,69 @@
 package com.livraria.dac2021.controllers;
 
-import java.util.List;
-import java.util.Optional;
+
+import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.stereotype.Controller;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.livraria.dac2021.model.Livro;
-import com.livraria.dac2021.repositories.LivroRepository;
+import com.livraria.dac2021.service.LivroService;
 
-/**
- * 
- *
- */
-@Controller
+
+@RestController
+@RequestMapping("/livro")
 public class LivroController {
 
 	@Autowired
-	private LivroRepository repository; 
-	
-	public Livro save (Livro livro) {
-		return repository.save(livro);
+	private LivroService service;
+
+	@PostMapping
+	public ResponseEntity<Livro> save(@RequestBody @Valid Livro book, HttpServletResponse response) {
+		Livro livroSalvo = service.save(book);
+		return ResponseEntity.status(HttpStatus.CREATED).body(livroSalvo);
+	}
+
+
+	@PutMapping("/{codigo}")
+	public ResponseEntity<Livro> update(@PathVariable Long codigo, @RequestBody Livro book) {
+		Livro livroSalvo = service.update(codigo, book);
+		return ResponseEntity.ok(livroSalvo);
+	}
+
+	@DeleteMapping("/{codigo}")
+	@ResponseStatus(HttpStatus.NO_CONTENT)
+	public void delete(@PathVariable Long codigo) {
+		service.delete(codigo);
+	}
+
+	@GetMapping("/baratos")
+	public Page<Livro> getListaCincoMaisBaratos(Pageable page) {
+		return service.findListaCincoMaisBaratos(page);
+	}
+
+	@GetMapping("/ordenados")
+	public Page<Livro> findAllOrdenadoPorTitulo(Pageable page) {
+		return service.findAllOrdenadoPorTitulo(page);
+	}
+
+	@GetMapping
+	public Page<Livro> findAll(Pageable page) {
+		return service.findAll(page);
 	}
 	
-	public void delete (Livro livro) {
-		repository.delete(livro);
-	}
 	
-	public List<Livro> findAll (){
-		return repository.findAll();
-	}
-	
-	public Livro update (Livro livro) {
-		return repository.save(livro);
-	}
-	
-	public Optional<Livro> findById(Integer id) {
-		
-		return repository.findById(id);
-	}
-	
-	public List<Livro> findCheapers (){
-		return repository.findTop5LivrosByEstoqueGreaterThanOrderByPrecoDesc(1);
-	}
-	
-	public Page<Livro> findAllByPage (Integer pag){
-		Pageable page =  PageRequest.of(0, 5, Sort.by(Sort.Direction.ASC,"titulo"));
-		return repository.findAll(page);
-	}
-	
-	public Page<Livro> findAllByPageInEstoque(Integer pag){
-		Pageable page =  PageRequest.of(pag, 5, Sort.by(Sort.Direction.ASC,"titulo"));
-		return repository.findByEstoqueGreaterThan(1, page);
-	}
-	
-	public Page<Livro> findAllByPageNotInEstoque(Integer pag){
-		Pageable page =  PageRequest.of(pag, 5, Sort.by(Sort.Direction.ASC,"titulo"));
-		return repository.findByEstoqueEquals(0, page);
-	}
 	
 }
